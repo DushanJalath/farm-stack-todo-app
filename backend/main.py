@@ -8,9 +8,10 @@ from database import (
     remove_todo
     )
 from model import ToDo
+
 app=FastAPI()
 
-origins=['https://localhost:3000']
+origins=['http://localhost:3000'] #react port (front end port)
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,15 +22,15 @@ app.add_middleware(
 )
 
 @app.get("/")
-def read_root():
+async def read_root():
     return {"Ping":"Pong"}
 
-@app.get('api/todo')
+@app.get('/api/todo',response_model=list[ToDo])
 async def get_todo():
     response=await fetch_all_todos()
     return response
 
-@app.get('/api/get_todo_by_id{title}')
+@app.get('/api/get_todo_by_id{title}',response_model=ToDo)
 async def get_todo_by_id(title):
     response=await fetch_one_todo(title)
     if response:
@@ -37,21 +38,21 @@ async def get_todo_by_id(title):
     raise HTTPException(404, f'there is no todo item with this title {title}')
     
 
-@app.post('api/todo',response_model=ToDo)
+@app.post('/api/todo',response_model=ToDo)
 async def save_todo(todo:ToDo):
-    response =await create_todo(todo.dict)
+    response =await create_todo(todo)
     if response :
         return response
     raise HTTPException(400,'something went wrong / Bad request')
 
-@app.put('api/todo{title}/',response_model=ToDo)
-async def update_todo(title:str,desc:str):
+@app.put('/api/todo/{title}/',response_model=ToDo)
+async def put_todo(title:str,desc:str):
     response=await update_todo(title,desc)
     if response:
         return response
     raise HTTPException(404, f'there is no todo item with this title {title}')
 
-@app.delete('api/todo{title}')
+@app.delete('/api/todo/{title}')
 async def delete_todo(title):
     response = await remove_todo(title)
     if response:

@@ -1,41 +1,36 @@
+from pymongo import MongoClient
 from model import ToDo
 
-#mongodb driver
-import motor.motor_asyncio 
+client = MongoClient('mongodb://localhost:27017/')
 
-client=motor.motor_asyncio.AsyncIOMotorClient('mongodb://localhost:27017')
-
-database=client.ToDoList
-collection=database.todo
+db = client["TodoList"]  # Replace with your database name
+collection = db["todo"] 
 
 
 async def fetch_one_todo(title):
-    document=await collection.find_one({"title":title})
+    document =collection.find_one({"title": title})
     return document
 
 async def fetch_all_todos():
-    todos=[]
-    cursor=collection.find({})
-    async for document in cursor:
-        todos.append(ToDo(**document))
-    return todos
+  todos = []
+  cursor = collection.find({})  # Find all documents
+  for doc in cursor:
+    todo_object = ToDo(**doc)  # Convert each document to a Todo object
+    todos.append(todo_object)  # Add the converted object to the todos list
+  return todos
+
 
 async def create_todo(todo):
-    document=todo
-    result=await collection.insert_one(document)
-    return result
+    result = collection.insert_one(todo.dict())
+    return todo.dict()
 
-async def update_todo(title,desc):
-    await collection.update_many({"title":title},{"$set":{"description":desc}})
-    document=await collection.find_one({"title":title})
+
+async def update_todo(title, desc):
+    update_result = collection.update_one({"title": title}, {"$set": {"description": desc}})
+    document = collection.find_one({"title": title})
     return document
 
 
 async def remove_todo(title):
-    await collection.delete_one({"title":title})
+    collection.delete_one({"title": title})
     return True
-
-
-
-
-        
